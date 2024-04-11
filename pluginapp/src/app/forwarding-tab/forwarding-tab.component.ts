@@ -38,11 +38,10 @@ export class ForwardingTabComponent implements OnInit {
           this.forwardingIdentity = this.forwardingInfo.forwardUser;
           console.log("Current user: ");
           console.log(this.forwardingIdentity?.displayName);
-        } else {
-          console.log("No forwarding info");
         }
       } else {
-        console.log(`Only General info for the moment, not for ${this.heading}`);
+        console.log(`Type: ${this.heading}`);
+        console.log(res);
       }
     });
     console.log("Leaving fetchForwardingInfo");

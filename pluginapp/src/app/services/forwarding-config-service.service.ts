@@ -13,16 +13,37 @@ declare const SailPoint: {
   CONTEXT_PATH: string
 };
 
+export interface DebugInfo {
+  status: string;
+  requestID: string;
+  warnings: string;
+  errors: string;
+  retryWait: number;
+  metaData: any;
+  attributes: any;
+  objects: {
+    class: string;
+    id: string;
+    readonly: boolean;
+    xml: string;
+  }[];
+  count: number;
+  complete: true;
+  success: boolean;
+  retry: boolean;
+  failure: boolean;
+}
+
 export interface ForwardingUser {
   id: string;
-  attributes: {},
-  name: string,
-  firstName: string,
-  lastName: string,
-  displayName: string,
-  workgroup: boolean,
-  pseudo: boolean,
-  locked: boolean
+  attributes: {};
+  name: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  workgroup: boolean;
+  pseudo: boolean;
+  locked: boolean;
 }
 
 export interface ForwardingInfo {
@@ -38,12 +59,14 @@ export class ForwardingConfigServiceService {
   iiqUrl: string;
   pluginUrl: any;
   token: any;
+  username: string;
 
   constructor(private http: HttpClient) {
     if (isDevMode()) {
       console.log("DEV mode");
       this.iiqUrl = '/identityiq'; // use proxy
       this.pluginUrl = '/identityiq/plugin/rest/advancedForwarding';
+      this.username = environment.username;
       let encoded = btoa(environment.username + ':' + environment.password);
       this.headers = new HttpHeaders({
         "Authorization": "Basic " + encoded,
@@ -53,6 +76,7 @@ export class ForwardingConfigServiceService {
     } else {
       console.log("Prod mode?");
       this.pluginUrl = PluginHelper.getPluginRestUrl('advancedForwarding');
+      this.username = PluginHelper.getCurrentUsername();
       this.iiqUrl = SailPoint.CONTEXT_PATH;
       this.token = PluginHelper.getCsrfToken();
       this.headers = new HttpHeaders({
@@ -79,6 +103,14 @@ export class ForwardingConfigServiceService {
     if (type === 'General') {
       return this.getData<ForwardingInfo>(this.iiqUrl, '/ui/rest/identityPreferences/forwarding');
     } else {
+      let result = this.getData<DebugInfo>(this.iiqUrl, '/rest/debug/Identity/' + this.username + '?useName=true');
+      let xml: any;
+      result.subscribe((debug: DebugInfo) => {
+        console.log(`Result for ${type} on ${this.username}`);
+        console.log(debug);
+        xml = debug.objects[0].xml;
+        console.log(xml);
+      });
       return new Observable();
     }
   }
