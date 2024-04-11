@@ -1,0 +1,35 @@
+<div class="tab-content">
+  <section class="container-fluid bg-light m-t general-preferences">
+    <div class="bg-white panel-body">
+      <div class="edit-forwarding">
+        <section>
+          <div *ngIf="forwardingIdentity" class="row">
+            <div class="col-xs-4">
+              <div class="form-group">
+                <label>Current {{ heading }} Forwarding Identity</label>
+                <h5>{{ forwardingIdentity.displayName }}</h5>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <form [formGroup]="forwardingForm" (ngSubmit)="onSubmit()">
+            <div class="row">
+              <div class="col-xs-12">
+                <div class="form-group">
+                  <label for="name">{{ heading }} Forwarding User</label>
+                  <input type="text" id="name" class="form-control" formControlName="name">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xs-12">
+                <button type="submit" class="btn btn-success">Save</button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </section>
+</div>

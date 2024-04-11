@@ -1,0 +1,11 @@
+button {
+  background-color: #10A2CE;
+}
+div.bg-white {
+  font-size: 12px;
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 15;
+  padding: 15px;
+  background-color: #fff;
+  color: #717171;
+}

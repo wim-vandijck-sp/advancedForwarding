@@ -1,0 +1,10 @@
+<section class="edit-prefences-tabs">
+  <tabset class="tab-container">
+    <tab *ngFor="let tab of tabs"
+      [heading]="tab.title"
+      [active]="tab.active"
+      (selectTab)="tab.active = true">
+      <app-forwarding-tab [heading]="tab.title"></app-forwarding-tab>
+    </tab>
+  </tabset>
+</section>

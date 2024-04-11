@@ -1,0 +1,12 @@
+POST http://localhost:8181/identityiq/rest/workflows/Manage%20Forwarders/launch HTTP/1.1
+Authorization: Basic Jerry.Bennett:xyzzy
+content-type: application/json
+
+{"workflowArgs":
+    {
+        "launcher":"Jerry.Bennett",
+        "certificationForward":"Amy.Cox",
+        "approvalForward":"",
+        "policyForward":""
+    }
+}
