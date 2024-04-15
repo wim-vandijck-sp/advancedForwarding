@@ -27,24 +27,14 @@ export class ForwardingTabComponent implements OnInit {
     this.fetchForwardingInfo();
   }
 
-  private fetchForwardingInfo() {
-    console.log("Entering fetchForwaringInfo");
-    this.forwardingConfigService.getForwardingInfo(this.heading).subscribe((res: ForwardingInfo) => {
-      this.forwardingInfo = res;
-      console.log("Forwarding Info:");
-      console.log(this.forwardingInfo);
-      if (this.heading === 'General') {
-        if (this.forwardingInfo.forwardUser) {
-          this.forwardingIdentity = this.forwardingInfo.forwardUser;
-          console.log("Current user: ");
-          console.log(this.forwardingIdentity?.displayName);
-        }
-      } else {
-        console.log(`Type: ${this.heading}`);
-        console.log(res);
-      }
-    });
-    console.log("Leaving fetchForwardingInfo");
+  private async fetchForwardingInfo() {
+    console.log("Entering fetchForwaringInfo for ", this.heading);
+    this.forwardingInfo = await this.forwardingConfigService.getForwardingInfo(this.heading);
+    this.forwardingIdentity = this.forwardingInfo.forwardUser;
+    console.log('Info:',this.forwardingInfo );
+    console.log(`Identity: ${this.forwardingInfo!.forwardUser!.name}`);
+    console.log(`Promised info: ${this.forwardingInfo.forwardUser?.displayName}`);
+    console.log(`Leaving fetchForwardingInfo for ${this.heading}: ${this.forwardingInfo.forwardUser?.displayName}`);
   }
 
   onSubmit() {

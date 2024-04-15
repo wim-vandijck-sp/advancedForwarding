@@ -3,6 +3,9 @@ import { Injectable, isDevMode } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment.development';
 
+declare const require: (arg0: string) => any;
+const xml2js = require("xml2js");
+
 declare const PluginHelper: {
   getCsrfToken: Function
   getPluginRestUrl: Function
@@ -12,6 +15,11 @@ declare const PluginHelper: {
 declare const SailPoint: {
   CONTEXT_PATH: string
 };
+
+interface Preference {
+  key: string;
+  value: string;
+}
 
 export interface DebugInfo {
   status: string;
@@ -36,14 +44,14 @@ export interface DebugInfo {
 
 export interface ForwardingUser {
   id: string;
-  attributes: {};
+  attributes?: {};
   name: string;
-  firstName: string;
-  lastName: string;
-  displayName: string;
-  workgroup: boolean;
-  pseudo: boolean;
-  locked: boolean;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  workgroup?: boolean;
+  pseudo?: boolean;
+  locked?: boolean;
 }
 
 export interface ForwardingInfo {
@@ -98,20 +106,49 @@ export class ForwardingConfigServiceService {
 * Get initial data for forwarding fields
 * @returns {ForwardingInfo} Set of Forwarding Info data.
 */
-  getForwardingInfo(type: string): Observable<ForwardingInfo> {
+  async getForwardingInfo(type: string): Promise<ForwardingInfo> {
     console.log("Entering getForwardingInfo() for type ", type);
+    // let forwardingInfo: ForwardingInfo = {};
     if (type === 'General') {
-      return this.getData<ForwardingInfo>(this.iiqUrl, '/ui/rest/identityPreferences/forwarding');
+      return new Promise<ForwardingInfo>((resolve) => {
+        this.getData<ForwardingInfo>(this.iiqUrl, '/ui/rest/identityPreferences/forwarding').subscribe((res: ForwardingInfo) => {
+          console.log("Forwarding Info:");
+          // forwardingInfo = res;
+          // console.log(forwardingInfo);
+          resolve(res);
+        });
+      });
     } else {
+      let attrName = type.toLowerCase() + 'Forward';
       let result = this.getData<DebugInfo>(this.iiqUrl, '/rest/debug/Identity/' + this.username + '?useName=true');
       let xml: any;
-      result.subscribe((debug: DebugInfo) => {
-        console.log(`Result for ${type} on ${this.username}`);
-        console.log(debug);
-        xml = debug.objects[0].xml;
-        console.log(xml);
+      let forwardingInfo: ForwardingInfo = {};
+      // let forwardingUser: ForwardingUser = { };
+      return new Promise<ForwardingInfo>((resolve) => {
+        result.subscribe(async (debug: DebugInfo) => {
+          console.log(`Result for ${type} on ${this.username}`);
+          // console.log(debug);
+          xml = debug.objects[0].xml;
+          // console.log(xml);
+          let prefs = await this.parseXmlToJson(xml);
+          console.log('prefs');
+          console.log(prefs);
+          console.log('Checking for ', attrName);
+          prefs.forEach(element => {
+            if (element.key === attrName) {
+              console.log("Found a match for ", type);
+              console.log(`Key : ${element.key}`);
+              console.log(`Value : ${element.value}`);
+              let forwardingUser: ForwardingUser = { id: element.value, name: element.value };
+              console.log(`ForwardingUser : ${forwardingUser.name}`);
+              forwardingInfo = { forwardUser: forwardingUser }
+            }  else {
+              console.log(`No match for ${attrName}`);
+            }
+          });
+          resolve(forwardingInfo);
+        });
       });
-      return new Observable();
     }
   }
 
@@ -122,5 +159,27 @@ export class ForwardingConfigServiceService {
     this.http.put(url, body, { headers: this.headers }).subscribe(res => {
       console.log(res);
     });
+  }
+
+  async parseXmlToJson(xml: string): Promise<Preference[]> {
+    console.log("Entering parseXmlToJson");
+    let preferences!: Preference[];
+    const parser = new xml2js.Parser({ explicitArray: false });
+    parser.parseString(xml, function (err: any, result: any) {
+      preferences = [];
+      console.log(result.Identity.Preferences);
+      result.Identity.Preferences.Map.entry.forEach((value: any) => {
+        console.log(`${value.$.key} : ${value.$.value}`)
+        let preference = { key: value.$.key, value: value.$.value };
+        console.log(preference);
+        preferences.push(preference);
+        console.log(preferences);
+
+      });
+      // console.log(preferences);
+      console.log('Done');
+    });
+    console.log("Leaving parseXmlToJson: ");
+    return preferences;
   }
 }
