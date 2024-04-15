@@ -43,7 +43,7 @@ export class ForwardingTabComponent implements OnInit {
     this.forwardingInfo = this.forwardingForm.value;
     let name = this.forwardingForm.controls['name'].value;
     console.log(`Name: ${name}`);
-    this.forwardingConfigService.setForwardingInfo(name);
+    this.forwardingConfigService.setForwardingInfo(this.heading,name);
     this.forwardingForm.reset();
     this.fetchForwardingInfo();
     console.log("Leaving onSubmit");

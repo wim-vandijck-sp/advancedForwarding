@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workflow PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Workflow explicitTransitions="true" handler="sailpoint.api.StandardWorkflowHandler" libraries="Identity,Role,PolicyViolation,LCM,BatchRequest,IdentityRequest" name="Manage Forwarders" taskType="LCM" type="LCMProvisioning">
+   <Variable initializer="string:false" name="transient">
+      <Description>Custom access request workflow to show the request of complex entitlements</Description>
+   </Variable>
+   <Variable initializer="string:Teller Access Request" name="flow">
+      <Description>The name of the LCM flow that launched this workflow.</Description>
+   </Variable>
+   <Variable initializer="string:true" name="trace">
+      <Description>Used for debugging this workflow and when set to true trace will be sent to stdout.</Description>
+   </Variable>
+   <Variable input="true" name="requester"/>
+   <Variable name="owner"/>
+   <Variable name="identityName"/>
+   <Variable name="ownerDelegation"/>
+   <Variable name="businessCase"/>
+   <Variable name="identityModel"/>
+   <Variable input="true" name="launcher"/>
+   <Variable name="plan">
+      <Description>The provisioning plan, which is built by the service method getDisablePlan. </Description>
+   </Variable>
+   <Variable name="project"/>
+   <Variable initializer="Normal" input="true" name="workItemPriority">
+      <Description> The String version of a WorkItem.Priority. This variable is used to set the
+      priority on all of the workitems generated as part of this workflow and also set on the
+      IdentityRequest object. </Description>
+   </Variable>
+   <Variable name="identityRequestId" output="true">
+      <Description> The sequence id of the Identity request object which is stored in the name field
+      of the identity request and auto-incremented. </Description>
+   </Variable>
+   <Variable initializer="rule:Get Launcher Preferences" name="preferences">
+      <Description>HashMap of the identity's preferences.</Description>
+   </Variable>
+   <RuleLibraries>
+      <Reference class="sailpoint.object.Rule" name="LCM Workflow Library"/>
+   </RuleLibraries>
+   <Step icon="Start" name="Start" posX="28" posY="10">
+      <Script>
+         <Source><![CDATA[
+import org.apache.logging.log4j.Logger; import org.apache.logging.log4j.Level; 
+import org.apache.logging.log4j.core.config.Configurator; 
+Logger log = org.apache.logging.log4j.LogManager.getLogger("SERI.Workflow.ManageForwarders");
+Configurator.setLevel("SERI.Workflow.ManageForwarders", Level.TRACE); 
+log.trace("----Starting Manage Forwarders ----- requestor is: " + launcher);
+
+      ]]></Source>
+      </Script>
+      <Transition to="Debug 1"/>
+   </Step>
+   <Step name="Debug 1" posX="328" posY="10">
+      <Script>
+         <Source><![CDATA[
+        import org.apache.logging.log4j.Logger; import org.apache.logging.log4j.Level; 
+        import org.apache.logging.log4j.core.config.Configurator; 
+        Logger log = org.apache.logging.log4j.LogManager.getLogger("SERI.Workflow.ManageForwarders.Debug1");
+        Configurator.setLevel("SERI.Workflow.ManageForwarders", Level.TRACE); 
+        log.trace("Debug Step.");
+        log.debug("Listing Variables passed to Beanshell namespace:");
+
+        // BeanShell has a "this.variables" array that we can access.
+        
+        for (int i = 0 ; i < this.variables.length ; i++) {
+           String varName = this.variables[i];
+        
+           Object varValue = null;
+           try {
+              if ("transient".equals(varName)) {
+                 varValue = "[reserved word]";
+              } else {
+                 varValue = eval(varName);
+              } 
+           } catch (Exception ex) {
+              varValue = "[eval exception]";
+           }
+        
+           String varClass = "void";
+           if ((void != varValue) && (null != varValue)) {
+              varClass = varValue.getClass().getSimpleName();
+           }
+        
+           if (void == varValue) {
+               log.debug(varName + " = void");
+           } else if (null == varValue) {
+               log.debug(varName + " = null");
+           } else {
+               log.debug(varName + ": " + varClass + " = " + varValue);
+           }
+        }
+      ]]></Source>
+      </Script>
+      <Transition to="Set Preferences"/>
+   </Step>
+   <Step name="Set Preferences" icon="Task">
+      <Script>
+         <Source><![CDATA[ 
+import sailpoint.object.*;
+import org.apache.logging.log4j.Logger; import org.apache.logging.log4j.Level; 
+import org.apache.logging.log4j.core.config.Configurator; 
+Logger log = org.apache.logging.log4j.LogManager.getLogger("SERI.Workflow.ManageForwarders.SetPreferences");
+Configurator.setLevel("SERI.Workflow.ManageForwarders.SetPreferences", Level.TRACE); 
+log.trace("Set Preferences Step.");
+Identity ident = context.getObjectByName(Identity.class,launcher);
+Map prefs = ident.getPreferences();
+//String certificationForward = identityModel.get("certificationForward");
+//String approvalForward      = identityModel.get("approvalForward");
+//String policyForward        = identityModel.get("policyForward");
+if (null != certificationsForward && !"".equals(certificationsForward)) {
+   prefs.put("certificationsForward",certificationsForward);
+}
+if (null != approvalsForward && !"".equals(approvalsForward)) {
+   prefs.put("approvalsForward",approvalsForward);
+}
+if (null != policyForward && !"".equals(policyForward)) {
+   prefs.put("policyForward",policyForward);
+}
+log.debug("Prefs: " + prefs);
+ident.setPreferences(prefs);
+context.saveObject(ident);
+context.commitTransaction();
+]]>
+         </Source>
+      </Script>
+   </Step>
+   <Step icon="Stop" name="end" posX="848" posY="10"/>
+</Workflow>

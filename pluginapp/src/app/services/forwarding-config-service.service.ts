@@ -103,9 +103,9 @@ export class ForwardingConfigServiceService {
   }
 
   /**
-* Get initial data for forwarding fields
-* @returns {ForwardingInfo} Set of Forwarding Info data.
-*/
+  * Get initial data for forwarding fields
+  * @returns {ForwardingInfo} Set of Forwarding Info data.
+  */
   async getForwardingInfo(type: string): Promise<ForwardingInfo> {
     console.log("Entering getForwardingInfo() for type ", type);
     // let forwardingInfo: ForwardingInfo = {};
@@ -142,7 +142,7 @@ export class ForwardingConfigServiceService {
               let forwardingUser: ForwardingUser = { id: element.value, name: element.value };
               console.log(`ForwardingUser : ${forwardingUser.name}`);
               forwardingInfo = { forwardUser: forwardingUser }
-            }  else {
+            } else {
               console.log(`No match for ${attrName}`);
             }
           });
@@ -152,13 +152,48 @@ export class ForwardingConfigServiceService {
     }
   }
 
-  setForwardingInfo(name: string) {
-    console.log("Entering setForwardingInfo");
-    let body = { "forwardUser": { "name": name }, "forwardStartDate": null, "fordwardEndDate": null };
-    let url = this.iiqUrl + '/ui/rest/identityPreferences/forwarding';
-    this.http.put(url, body, { headers: this.headers }).subscribe(res => {
-      console.log(res);
-    });
+  /**
+   * Set the forworders info.
+   * In the case of General, we'll use the existing preferences rest ui
+   * Otherwise, we'll call a workflow to call setPreference() on the identity.
+   * @param type The Type of forwarding info
+   * @param name The forwarders name.
+   */
+  setForwardingInfo(type: string, name: string) {
+    console.log(`Entering setForwardingInfo for type ${type} to ${name}`);
+    let body = {};
+    if (type === 'General') {
+      body = { "forwardUser": { "name": name }, "forwardStartDate": null, "fordwardEndDate": null };
+      let url = this.iiqUrl + '/ui/rest/identityPreferences/forwarding';
+      this.http.put(url, body, { headers: this.headers }).subscribe(res => {
+        console.log(res);
+      });
+    } else {
+      console.log("Launching workflow");
+      let url = this.iiqUrl + '/rest/workflows/Manage%20Forwarders/launch';
+      let certificationForward = '';
+      let approvalsForward      = '';
+      let policyForward        = '';
+      switch (type) {
+        case "Certifications": {
+          certificationForward = name;
+          break;
+        }
+        case "Approvals": {
+          approvalsForward = name;
+          break;
+        }
+        case "Policy": {
+          policyForward = name;
+          break;
+        }
+        default:
+      }
+      body = { "workflowArgs": { "launcher": this.username, "certificationsForward": certificationForward, "approvalsForward": approvalsForward, "policyForward": policyForward } };
+      this.http.post(url, body, { headers: this.headers }).subscribe(res => {
+        console.log(res);
+      });
+    }
   }
 
   async parseXmlToJson(xml: string): Promise<Preference[]> {

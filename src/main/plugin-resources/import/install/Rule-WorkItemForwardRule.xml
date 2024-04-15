@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="WorkItemForwardRule" type="WorkItemForward">
+   <Description>A rule used to examine a WorkItem and determine whether or not it needs to be forwarded to a new owner for further analysis or action.  The default forwarding rule in the system configuratin will be called every time a WorkItem is opened, and whenever it is forwarded in the user interface.</Description>
+   <Signature returnType="Object">
+      <Inputs>
+         <Argument name="log" type="org.apache.commons.logging.Log">
+            <Description>
+          The log object associated with the SailPointContext.
+        </Description>
+         </Argument>
+         <Argument name="context" type="sailpoint.api.SailPointContext">
+            <Description>
+          A sailpoint.api.SailPointContext object that can be used to query the database if necessary.
+        </Description>
+         </Argument>
+         <Argument name="item">
+            <Description>
+          The WorkItem being opened or forwarded.
+        </Description>
+         </Argument>
+         <Argument name="owner">
+            <Description>
+          The Identity that currently owns the work item.
+        </Description>
+         </Argument>
+      </Inputs>
+      <Returns>
+         <Argument name="newOwner">
+            <Description>
+          An Identity that should own the work item.  Alternatively, this can
+          be a String that is the name or id of the Identity.
+        </Description>
+         </Argument>
+      </Returns>
+   </Signature>
+   <Source><![CDATA[import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
+import sailpoint.tools.Util;
+import sailpoint.object.Identity;
+
+Logger log = org.apache.logging.log4j.LogManager.getLogger("SERI.Rule.WorkItemForwarding");
+Configurator.setLevel("SERI.Rule.WorkItemForwarding", Level.WARN);
+
+log.trace("Entering WorkItem Forwarding Rule");
+log.debug("Item: " + item.toXml());
+Identity current = item.getOwner();
+log.debug("Current owner is " + current.getName());
+
+newOwner = current;
+
+String prefAttr = "forward";
+
+switch (item.getType()) {
+   case sailpoint.object.WorkItem.Type.Approval:
+      log.debug("Approval");
+      prefAttr = "approvalForward";
+      break;
+   case sailpoint.object.WorkItem.Type.Certification:
+      log.debug("Certification");
+      prefAttr = "certificationForward";
+      break;
+   case sailpoint.object.WorkItem.Type.PolicyViolation:
+      log.debug("PolicyViolation");
+      prefAttr = "policyForward";
+      break;
+   default:
+      log.debug("Default: " + item.getType());
+   
+}
+String forward = owner.getPreference(prefAttr);
+log.debug("forward preference for " + prefAttr + " is " + forward);
+if (Util.isNotNullOrEmpty(forward)) {
+   newOwner = context.getObjectByName(Identity.class,forward);
+   log.debug("Got newOwner: " + newOwner);
+}
+log.trace("Leaving WorkItem rule: " + newOwner.getName());
+return newOwner;]]></Source>
+</Rule>
