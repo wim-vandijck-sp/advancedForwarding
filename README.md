@@ -100,6 +100,15 @@ cp [IIQ_INSTALLFOLDER]/identityiq/ui/js/bundles/SailPointBundle.js' src/main/web
 npx -p @angular/cli@15 ng new pluginapp
 ```
 
+#### Install the dependencies
+
+We can get everything installed to start working on the app with one command. Just make sure to run it in the `pluginapp` folder.
+
+```sh
+cd pluginapp
+npm install
+```
+
 #### App Settings
 
 -   In `package.json` change the `script.build` entry to `ng build --output-hashing=none`
@@ -212,3 +221,20 @@ mvn clean package
 From here on, you should be good to develop your Angular app, and it should look and act the same inside the IIQ plugin framework.
 
 Happy coding!!
+
+#### Using IIQ libraries 
+
+If you want to add java code and use the IIQ libraries, you can add these in the maven project like follows : 
+
+```sh
+mvn install:install-file -Dfile=[systempath to where iiq is]/identityiq/WEB-INF/lib/identityiq.jar -DgroupId=com.sailpoint -DartifactId=identityiq -Dversion=8.4 -Dpackaging=jar -DgeneratePom=true
+```
+
+Then you can use it as a dependency in the `pom.xml`:
+```xml
+        <dependency>
+            <groupId>com.sailpoint</groupId>
+            <artifactId>identityiq</artifactId>
+            <version>8.4</version>
+        </dependency>
+```
